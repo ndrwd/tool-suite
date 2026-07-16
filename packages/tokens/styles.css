@@ -142,6 +142,22 @@ button {
 }
 
 /*
+ * Shared field — used by the @tools/ui TextInput (class `ui-field`). Number
+ * fields drop the native spin buttons: the panels commit on every keystroke and
+ * clamp on blur, so the steppers add nothing and cover the value at these sizes.
+ */
+.ui-field::-webkit-outer-spin-button,
+.ui-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ui-field[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/*
  * Shared range slider — used by the @tools/ui Slider (class `ui-slider`) so
  * every tool renders an identical, monochrome control regardless of the OS
  * native styling. Edit here to restyle all sliders at once.

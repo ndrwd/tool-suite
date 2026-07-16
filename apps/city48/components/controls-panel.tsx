@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, Plus, X, RotateCcw } from "lucide-react"
-import { Chevron, Select, Slider, Toggle } from "@tools/ui"
+import { Chevron, SectionAction, Select, Slider, Toggle } from "@tools/ui"
 import { SHADERS, getShader, type ShaderLayer } from "@/lib/shaders"
 
 type Props = {
@@ -105,11 +105,11 @@ function LayerSection({
               aria-haspopup="listbox"
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
-              className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md bg-[var(--secondary)] px-3 py-2.5 text-left transition hover:brightness-110"
+              className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md bg-[var(--secondary)] px-3 py-2 text-left transition hover:brightness-110"
             >
               <span className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-medium text-[var(--foreground)]">{shader.name}</span>
-                <span className="truncate text-xs text-[var(--muted-foreground)]">{shader.description}</span>
+                <span className="truncate text-xs font-medium text-[var(--foreground)]">{shader.name}</span>
+                <span className="truncate text-2xs text-[var(--muted-foreground)]">{shader.description}</span>
               </span>
               <Chevron collapsed={false} />
             </button>
@@ -146,10 +146,10 @@ function LayerSection({
                           : "text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]"
                       }`}
                     >
-                      <Check className={`mt-0.5 size-3.5 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
+                      <Check className={`mt-0.5 size-3 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
                       <span className="flex flex-col">
-                        <span className="text-sm font-medium">{s.name}</span>
-                        <span className="text-xs text-[var(--muted-foreground)]">{s.description}</span>
+                        <span className="text-xs font-medium">{s.name}</span>
+                        <span className="text-2xs text-[var(--muted-foreground)]">{s.description}</span>
                       </span>
                     </button>
                   )
@@ -160,14 +160,10 @@ function LayerSection({
 
           <div className="flex items-center justify-between">
             <h3 className={caption}>Parameters</h3>
-            <button
-              type="button"
-              onClick={onResetParams}
-              className="flex items-center gap-1 text-2xs text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-            >
+            <SectionAction onClick={onResetParams}>
               <RotateCcw className="size-3" />
               Reset
-            </button>
+            </SectionAction>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -230,14 +226,10 @@ export function ControlsPanel({
       {/* Section header — full-bleed, matches other panel sections */}
       <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <h2 className={caption}>Effects</h2>
-        <button
-          type="button"
-          onClick={onAddLayer}
-          className="flex items-center gap-1 rounded-md border border-[var(--border)] px-2 py-1 text-2xs text-[var(--muted-foreground)] transition-colors hover:border-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-        >
+        <SectionAction onClick={onAddLayer}>
           <Plus className="size-3" />
           Add
-        </button>
+        </SectionAction>
       </div>
 
       {layers.length === 0 ? (

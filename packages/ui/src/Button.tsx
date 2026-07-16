@@ -25,3 +25,26 @@ export function Button({
     />
   );
 }
+
+/**
+ * Borderless action for a section header (Reset, Restore, Add) — muted until
+ * hovered, so it never competes with the section title next to it.
+ */
+export function SectionAction({
+  className,
+  type = "button",
+  ...props
+}: React.ComponentPropsWithoutRef<"button">): React.JSX.Element {
+  return (
+    <button
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 text-2xs text-[var(--muted-foreground)] outline-none transition-colors",
+        "hover:text-[var(--foreground)]",
+        "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+        className,
+      )}
+      type={type}
+      {...props}
+    />
+  );
+}

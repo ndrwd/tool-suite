@@ -13,7 +13,7 @@ export function FieldLabel({ children }: { children: React.ReactNode }): React.J
 
 /** Shared visual style for text/number/select inputs. Exported for one-off inputs. */
 export const fieldInputClass =
-  "w-full rounded-md border border-transparent bg-[var(--secondary)] px-2 py-1.5 text-xs text-[var(--foreground)] outline-none transition hover:brightness-110 focus:border-[var(--foreground)] focus-visible:ring-1 focus-visible:ring-[var(--ring)]";
+  "ui-field w-full rounded-md border border-transparent bg-[var(--secondary)] px-2 py-1.5 text-xs text-[var(--foreground)] outline-none transition hover:brightness-110 focus:border-[var(--foreground)] focus-visible:ring-1 focus-visible:ring-[var(--ring)]";
 
 /** Styled `<input>` that forwards all native props (type, min, value, …). */
 export function TextInput({

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ImageIcon, Video, RotateCcw } from "lucide-react"
-import { Chevron, TextInput } from "@tools/ui"
+import { Chevron, SectionAction, SegmentedControl, TextInput, type SegmentedOption } from "@tools/ui"
 import type { CanvasSettings } from "@/lib/renderer"
 
 type Props = {
@@ -36,20 +36,16 @@ function fromHex(hex: string): [number, number, number] {
   ]
 }
 
-const BG_MODES: { id: 0 | 1 | 2; label: string }[] = [
-  { id: 0, label: "None" },
-  { id: 1, label: "Color" },
-  { id: 2, label: "Image" },
+const BG_MODES: SegmentedOption<0 | 1 | 2>[] = [
+  { value: 0, label: "None" },
+  { value: 1, label: "Color" },
+  { value: 2, label: "Image" },
 ]
 
-// Monochrome segmented control shared by the media tabs and background modes.
-function segClass(active: boolean) {
-  return `flex flex-1 items-center justify-center gap-1.5 rounded-sm px-3 py-1.5 text-2xs font-semibold transition-colors ${
-    active
-      ? "bg-[var(--secondary)] text-[var(--foreground)]"
-      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-  }`
-}
+const MEDIA_TABS: SegmentedOption<"image" | "video">[] = [
+  { value: "image", label: "Image", icon: <ImageIcon className="size-3.5" /> },
+  { value: "video", label: "Video", icon: <Video className="size-3.5" /> },
+]
 
 export function MediaPanel({
   mediaKind,
@@ -110,16 +106,13 @@ export function MediaPanel({
       {/* Media type — its own section, divided from Canvas */}
       <section className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-4">
       <div className="flex items-center gap-3">
-        <div className="flex flex-1 rounded-md bg-[var(--muted)] p-0.5">
-          <button type="button" onClick={() => onPickMedia("image")} className={segClass(activeTab === "image")}>
-            <ImageIcon className="size-3.5" />
-            Image
-          </button>
-          <button type="button" onClick={() => onPickMedia("video")} className={segClass(activeTab === "video")}>
-            <Video className="size-3.5" />
-            Video
-          </button>
-        </div>
+        <SegmentedControl
+          aria-label="Media type"
+          className="flex-1"
+          onChange={onPickMedia}
+          options={MEDIA_TABS}
+          value={activeTab}
+        />
 
         <div className="size-9 shrink-0 overflow-hidden rounded-md bg-[var(--muted)]">
           {previewUrl && mediaKind === "image" ? (
@@ -147,14 +140,10 @@ export function MediaPanel({
           <Chevron collapsed={collapsed} />
           <span className="text-2xs font-semibold tracking-wide text-[var(--foreground)]">Canvas</span>
         </button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex items-center gap-1 text-2xs text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-        >
+        <SectionAction onClick={onReset}>
           <RotateCcw className="size-3" />
           Restore
-        </button>
+        </SectionAction>
       </div>
 
       {!collapsed && settings && (
@@ -217,10 +206,11 @@ export function MediaPanel({
             </div>
           </div>
 
-          {/* Zoom — manual entry only */}
-          <div className="flex items-center justify-between gap-3">
+          {/* Zoom — manual entry only. Same 2-column grid as Size/Position above,
+              so the field lines up with the position pad rather than floating. */}
+          <div className="grid grid-cols-2 items-center gap-4">
             <span className={caption}>Zoom</span>
-            <div className="w-24">
+            <div>
               <TextInput
                 type="number"
                 min={0.2}
@@ -240,18 +230,12 @@ export function MediaPanel({
           {/* Canvas background */}
           <div className="flex flex-col gap-2">
             <span className={caption}>Canvas background</span>
-            <div className="flex rounded-md bg-[var(--muted)] p-0.5">
-              {BG_MODES.map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  onClick={() => onChange({ bgMode: mode.id })}
-                  className={segClass(settings.bgMode === mode.id)}
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              aria-label="Canvas background"
+              onChange={(bgMode) => onChange({ bgMode })}
+              options={BG_MODES}
+              value={settings.bgMode}
+            />
 
             {settings.bgMode === 1 && (
               <label className="flex items-center justify-between rounded-md bg-[var(--secondary)] px-3 py-2">
