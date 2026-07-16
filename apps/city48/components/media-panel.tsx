@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ImageIcon, Video, RotateCcw } from "lucide-react"
-import { Chevron, SectionAction, SegmentedControl, TextInput, type SegmentedOption } from "@tools/ui"
+import {
+  CollapsibleSection,
+  FieldLabel,
+  SectionAction,
+  SegmentedControl,
+  TextInput,
+  type SegmentedOption,
+} from "@tools/ui"
 import type { CanvasSettings } from "@/lib/renderer"
 
 type Props = {
@@ -16,9 +23,6 @@ type Props = {
   bgPreviewUrl: string | null
   onPickBgImage: () => void
 }
-
-// Shared caption style — matches the design system (@tools/ui FieldLabel).
-const caption = "text-2xs font-medium text-[var(--muted-foreground)]"
 
 function toHex(c: [number, number, number]) {
   return (
@@ -58,7 +62,6 @@ export function MediaPanel({
   bgPreviewUrl,
   onPickBgImage,
 }: Props) {
-  const [collapsed, setCollapsed] = useState(true)
   const padRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
 
@@ -105,173 +108,165 @@ export function MediaPanel({
     <>
       {/* Media type — its own section, divided from Canvas */}
       <section className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-4">
-      <div className="flex items-center gap-3">
-        <SegmentedControl
-          aria-label="Media type"
-          className="flex-1"
-          onChange={onPickMedia}
-          options={MEDIA_TABS}
-          value={activeTab}
-        />
+        <div className="flex items-center gap-3">
+          <SegmentedControl
+            aria-label="Media type"
+            className="flex-1"
+            onChange={onPickMedia}
+            options={MEDIA_TABS}
+            value={activeTab}
+          />
 
-        <div className="size-9 shrink-0 overflow-hidden rounded-md bg-[var(--muted)]">
-          {previewUrl && mediaKind === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={previewUrl || "/placeholder.svg"} alt="Current media preview" className="size-full object-cover" />
-          ) : (
-            <div className="flex size-full items-center justify-center text-[var(--muted-foreground)]">
-              {mediaKind === "video" ? <Video className="size-4" /> : <ImageIcon className="size-4" />}
-            </div>
-          )}
+          <div className="size-9 shrink-0 overflow-hidden rounded-md bg-[var(--muted)]">
+            {previewUrl && mediaKind === "image" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={previewUrl || "/placeholder.svg"} alt="Current media preview" className="size-full object-cover" />
+            ) : (
+              <div className="flex size-full items-center justify-center text-[var(--muted-foreground)]">
+                {mediaKind === "video" ? <Video className="size-4" /> : <ImageIcon className="size-4" />}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
       </section>
 
       {/* Canvas settings — its own section */}
-      <section className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-4">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed((v) => !v)}
-          className="flex items-center gap-1.5"
-        >
-          <Chevron collapsed={collapsed} />
-          <span className="text-2xs font-semibold tracking-wide text-[var(--foreground)]">Canvas</span>
-        </button>
-        <SectionAction onClick={onReset}>
-          <RotateCcw className="size-3" />
-          Restore
-        </SectionAction>
-      </div>
-
-      {!collapsed && settings && (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Size */}
-            <div className="flex flex-col gap-1.5">
-              <span className={caption}>Size</span>
-              <p className="text-2xs text-[var(--muted-foreground)]">
-                original: {originalSize ? `${originalSize.width}×${originalSize.height}` : "—"}
-              </p>
-              <div className="flex items-center gap-1.5">
-                <TextInput
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={widthStr}
-                  onChange={(e) => {
-                    setWidthStr(e.target.value)
-                    commitSize("width", e.target.value)
-                  }}
-                  onBlur={() => setWidthStr(String(Math.round(settings.width)))}
-                />
-                <span className="text-2xs text-[var(--muted-foreground)]">x</span>
-                <TextInput
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={heightStr}
-                  onChange={(e) => {
-                    setHeightStr(e.target.value)
-                    commitSize("height", e.target.value)
-                  }}
-                  onBlur={() => setHeightStr(String(Math.round(settings.height)))}
-                />
-              </div>
-            </div>
-
-            {/* Position */}
-            <div className="flex flex-col gap-1.5">
-              <span className={caption}>Position</span>
-              <div
-                ref={padRef}
-                onPointerDown={(e) => {
-                  dragging.current = true
-                  ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-                  handlePad(e)
-                }}
-                onPointerMove={(e) => dragging.current && handlePad(e)}
-                onPointerUp={() => (dragging.current = false)}
-                className="relative h-24 cursor-crosshair rounded-md bg-[var(--secondary)]"
-              >
-                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--border)]" />
-                <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--border)]" />
-                <div
-                  className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-[var(--foreground)] bg-[color-mix(in_oklab,var(--foreground)_20%,transparent)]"
-                  style={{ left: `${handleX}%`, top: `${handleY}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Zoom — manual entry only. Same 2-column grid as Size/Position above,
-              so the field lines up with the position pad rather than floating. */}
-          <div className="grid grid-cols-2 items-center gap-4">
-            <span className={caption}>Zoom</span>
-            <div>
-              <TextInput
-                type="number"
-                min={0.2}
-                max={4}
-                step={0.1}
-                inputMode="decimal"
-                value={zoomStr}
-                onChange={(e) => {
-                  setZoomStr(e.target.value)
-                  commitZoom(e.target.value)
-                }}
-                onBlur={() => setZoomStr(settings.zoom.toFixed(2))}
-              />
-            </div>
-          </div>
-
-          {/* Canvas background */}
-          <div className="flex flex-col gap-2">
-            <span className={caption}>Canvas background</span>
-            <SegmentedControl
-              aria-label="Canvas background"
-              onChange={(bgMode) => onChange({ bgMode })}
-              options={BG_MODES}
-              value={settings.bgMode}
-            />
-
-            {settings.bgMode === 1 && (
-              <label className="flex items-center justify-between rounded-md bg-[var(--secondary)] px-3 py-2">
-                <span className="text-xs text-[var(--foreground)]">Color</span>
-                <input
-                  type="color"
-                  value={toHex(settings.bgColor)}
-                  onChange={(e) => onChange({ bgColor: fromHex(e.target.value) })}
-                  className="size-7 cursor-pointer rounded bg-transparent"
-                />
-              </label>
-            )}
-
-            {settings.bgMode === 2 && (
-              <button
-                type="button"
-                onClick={onPickBgImage}
-                className="flex w-full items-center gap-3 rounded-md bg-[var(--secondary)] px-3 py-2 text-left transition hover:brightness-110"
-              >
-                <div className="size-9 shrink-0 overflow-hidden rounded bg-[var(--muted)]">
-                  {bgPreviewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={bgPreviewUrl || "/placeholder.svg"} alt="Background" className="size-full object-cover" />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-[var(--muted-foreground)]">
-                      <ImageIcon className="size-4" />
-                    </div>
-                  )}
+      <CollapsibleSection
+        defaultCollapsed
+        headerAccessory={
+          <SectionAction onClick={onReset}>
+            <RotateCcw className="size-3" />
+            Restore
+          </SectionAction>
+        }
+        title="Canvas"
+      >
+        {settings && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Size */}
+              <div className="flex flex-col gap-1.5">
+                <FieldLabel>Size</FieldLabel>
+                <p className="text-2xs text-[var(--muted-foreground)]">
+                  original: {originalSize ? `${originalSize.width}×${originalSize.height}` : "—"}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <TextInput
+                    type="number"
+                    min={1}
+                    inputMode="numeric"
+                    value={widthStr}
+                    onChange={(e) => {
+                      setWidthStr(e.target.value)
+                      commitSize("width", e.target.value)
+                    }}
+                    onBlur={() => setWidthStr(String(Math.round(settings.width)))}
+                  />
+                  <span className="text-2xs text-[var(--muted-foreground)]">x</span>
+                  <TextInput
+                    type="number"
+                    min={1}
+                    inputMode="numeric"
+                    value={heightStr}
+                    onChange={(e) => {
+                      setHeightStr(e.target.value)
+                      commitSize("height", e.target.value)
+                    }}
+                    onBlur={() => setHeightStr(String(Math.round(settings.height)))}
+                  />
                 </div>
-                <span className="text-xs text-[var(--muted-foreground)]">{bgPreviewUrl ? "Change image" : "Choose image"}</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-      </section>
+              </div>
+
+              {/* Position */}
+              <div className="flex flex-col gap-1.5">
+                <FieldLabel>Position</FieldLabel>
+                <div
+                  ref={padRef}
+                  onPointerDown={(e) => {
+                    dragging.current = true
+                    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+                    handlePad(e)
+                  }}
+                  onPointerMove={(e) => dragging.current && handlePad(e)}
+                  onPointerUp={() => (dragging.current = false)}
+                  className="relative h-24 cursor-crosshair rounded-md bg-[var(--secondary)]"
+                >
+                  <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--border)]" />
+                  <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--border)]" />
+                  <div
+                    className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-[var(--foreground)] bg-[color-mix(in_oklab,var(--foreground)_20%,transparent)]"
+                    style={{ left: `${handleX}%`, top: `${handleY}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Zoom — manual entry only. Same 2-column grid as Size/Position above,
+                so the field lines up with the position pad rather than floating. */}
+            <div className="grid grid-cols-2 items-center gap-4">
+              <FieldLabel>Zoom</FieldLabel>
+              <div>
+                <TextInput
+                  type="number"
+                  min={0.2}
+                  max={4}
+                  step={0.1}
+                  inputMode="decimal"
+                  value={zoomStr}
+                  onChange={(e) => {
+                    setZoomStr(e.target.value)
+                    commitZoom(e.target.value)
+                  }}
+                  onBlur={() => setZoomStr(settings.zoom.toFixed(2))}
+                />
+              </div>
+            </div>
+
+            {/* Canvas background */}
+            <div className="flex flex-col gap-2">
+              <FieldLabel>Canvas background</FieldLabel>
+              <SegmentedControl
+                aria-label="Canvas background"
+                onChange={(bgMode) => onChange({ bgMode })}
+                options={BG_MODES}
+                value={settings.bgMode}
+              />
+
+              {settings.bgMode === 1 && (
+                <label className="flex items-center justify-between rounded-md bg-[var(--secondary)] px-3 py-2">
+                  <span className="text-xs text-[var(--foreground)]">Color</span>
+                  <input
+                    type="color"
+                    value={toHex(settings.bgColor)}
+                    onChange={(e) => onChange({ bgColor: fromHex(e.target.value) })}
+                    className="size-7 cursor-pointer rounded bg-transparent"
+                  />
+                </label>
+              )}
+
+              {settings.bgMode === 2 && (
+                <button
+                  type="button"
+                  onClick={onPickBgImage}
+                  className="flex w-full items-center gap-3 rounded-md bg-[var(--secondary)] px-3 py-2 text-left transition hover:brightness-110"
+                >
+                  <div className="size-9 shrink-0 overflow-hidden rounded bg-[var(--muted)]">
+                    {bgPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={bgPreviewUrl || "/placeholder.svg"} alt="Background" className="size-full object-cover" />
+                    ) : (
+                      <div className="flex size-full items-center justify-center text-[var(--muted-foreground)]">
+                        <ImageIcon className="size-4" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-[var(--muted-foreground)]">{bgPreviewUrl ? "Change image" : "Choose image"}</span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </CollapsibleSection>
     </>
   )
 }

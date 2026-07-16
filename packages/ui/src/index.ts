@@ -1,6 +1,6 @@
 export { cn } from "./cn";
 export { Button, SectionAction } from "./Button";
-export { FieldLabel, TextInput, fieldInputClass } from "./Field";
+export { FieldLabel, TextInput, fieldInputClass, fieldLabelClass } from "./Field";
 export { Slider } from "./Slider";
 export { Select, type SelectOption } from "./Select";
 export { Toggle } from "./Toggle";

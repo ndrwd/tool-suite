@@ -59,7 +59,7 @@ export function CollapsibleSection({
       <div className="flex items-center gap-2">
         <button
           aria-expanded={!collapsed}
-          className="flex flex-1 items-center gap-1.5 text-left text-2xs font-semibold tracking-wide text-[var(--foreground)]"
+          className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-2xs font-semibold tracking-wide text-[var(--foreground)]"
           onClick={toggle}
           type="button"
         >

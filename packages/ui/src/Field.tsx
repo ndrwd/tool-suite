@@ -2,13 +2,13 @@ import * as React from "react";
 
 import { cn } from "./cn";
 
+/** Shared visual style for the caption above a control. Exported for headings
+ * that need the same look but their own element (`<h2>`, `<h3>`, …). */
+export const fieldLabelClass = "text-2xs font-medium text-[var(--muted-foreground)]";
+
 /** Small uppercase caption used above every control. */
 export function FieldLabel({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return (
-    <span className="text-2xs font-medium text-[var(--muted-foreground)]">
-      {children}
-    </span>
-  );
+  return <span className={fieldLabelClass}>{children}</span>;
 }
 
 /** Shared visual style for text/number/select inputs. Exported for one-off inputs. */
