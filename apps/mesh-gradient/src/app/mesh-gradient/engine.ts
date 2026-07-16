@@ -145,22 +145,13 @@ export function blobPosition(
   };
 }
 
-/**
- * Paint the mesh. Each node is a radial gradient fading to full transparency;
- * a single canvas `blur` filter melts them into one continuous field, which is
- * what separates a mesh gradient from a pile of visible circles.
- *
- * The caller owns the background fill — the blobs are drawn over whatever is
- * already on the context.
- */
-export function drawMeshGradient(
+/** Paint the blob field into `context`, in canvas coordinate space. */
+function drawBlobs(
   context: CanvasRenderingContext2D,
-  options: DrawMeshOptions,
+  blobs: MeshBlob[],
+  loopProgress: number,
+  motionAmplitude: number,
 ): void {
-  const { blobs, blur, grain, height, loopProgress, motionAmplitude, width } = options;
-
-  context.save();
-  context.filter = blur > 0 ? `blur(${blur}px)` : "none";
   // 'lighter' would blow out toward white where nodes overlap; source-over
   // keeps each color readable and lets the blur do the blending.
   context.globalCompositeOperation = "source-over";
@@ -178,8 +169,99 @@ export function drawMeshGradient(
     context.arc(x, y, blob.radius, 0, Math.PI * 2);
     context.fill();
   }
+}
 
-  context.restore();
+let blobLayer: HTMLCanvasElement | null = null;
+
+function getBlobLayer(width: number, height: number): HTMLCanvasElement | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  if (!blobLayer) {
+    blobLayer = document.createElement("canvas");
+  }
+
+  if (blobLayer.width !== width || blobLayer.height !== height) {
+    blobLayer.width = width;
+    blobLayer.height = height;
+  }
+
+  return blobLayer;
+}
+
+/**
+ * How much to shrink the blob layer before blurring it.
+ *
+ * Blurring a full 1080p frame every raster is what actually costs the frame
+ * rate (measured: 5fps at Blend 150, and the same 5fps with Grain off — the
+ * blur, not the grain). A blurred field is low-frequency by definition, so it
+ * can be rendered small and scaled back up for a fraction of the work.
+ *
+ * The divisor is tied to the blur radius, not fixed: the softness resampling
+ * adds is only invisible while the blur dominates it. Below Blend 8 the blobs
+ * keep a readable falloff of their own, so the layer stays full-size — and at
+ * that setting there is nothing to fix anyway (36fps with no blur).
+ */
+function blobLayerScale(blur: number): number {
+  return Math.max(1, Math.min(4, Math.floor(blur / 8)));
+}
+
+/**
+ * Paint the mesh. Each node is a radial gradient fading to full transparency;
+ * a single canvas `blur` filter melts them into one continuous field, which is
+ * what separates a mesh gradient from a pile of visible circles.
+ *
+ * The caller owns the background fill — the blobs are drawn over whatever is
+ * already on the context.
+ */
+export function drawMeshGradient(
+  context: CanvasRenderingContext2D,
+  options: DrawMeshOptions,
+): void {
+  const { blobs, blur, grain, height, loopProgress, motionAmplitude, width } = options;
+
+  // Canvas `filter: blur()` is applied in DEVICE pixels and ignores the current
+  // transform (measured: a blur(20px) edge bleeds ~26 device px whether the
+  // transform scale is 1, 2 or 4). Blend is authored in canvas coordinates, so
+  // the radius has to be scaled by hand — otherwise a 4K export comes out half
+  // as blended as the preview, and an 8K export a quarter.
+  const deviceScale = context.getTransform().a || 1;
+  const scale = blobLayerScale(blur);
+  // Layer resolution follows DEVICE pixels, not canvas coordinates: sizing it
+  // off the coordinate space would silently drop export detail as the pixel
+  // ratio climbs.
+  const layerScale = deviceScale / scale;
+  const layer =
+    scale > 1
+      ? getBlobLayer(
+          Math.max(1, Math.ceil(width * layerScale)),
+          Math.max(1, Math.ceil(height * layerScale)),
+        )
+      : null;
+  const layerContext = layer?.getContext("2d") ?? null;
+
+  if (layer && layerContext) {
+    // Draw at full canvas coordinates into a smaller buffer: the transform
+    // shrinks the geometry, and the blur shrinks with it, so scaling back up
+    // reproduces the full-size blur.
+    layerContext.setTransform(layerScale, 0, 0, layerScale, 0, 0);
+    layerContext.clearRect(0, 0, width, height);
+    layerContext.filter = `blur(${blur * layerScale}px)`;
+    drawBlobs(layerContext, blobs, loopProgress, motionAmplitude);
+    layerContext.filter = "none";
+
+    context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(layer, 0, 0, width, height);
+    context.restore();
+  } else {
+    context.save();
+    context.filter = blur > 0 ? `blur(${blur * deviceScale}px)` : "none";
+    drawBlobs(context, blobs, loopProgress, motionAmplitude);
+    context.restore();
+  }
 
   if (grain > 0) {
     const tile = getGrainTile();
