@@ -68,10 +68,15 @@ export function ControlsPanel({
       {schema.sections.map((section, index) => {
         // The actions section renders as a plain pinned footer (no collapsible
         // header) so every tool's export area looks identical.
+        //
+        // `mt-auto` pins it to the panel bottom when the sections do not fill
+        // the height; `sticky bottom-0` keeps it pinned while a taller panel
+        // scrolls. Sticky alone is not enough — with no overflow it just sits
+        // after the last section, leaving dead space below.
         if (index === stickyIndex) {
           return (
             <div
-              className="sticky bottom-0 z-10 border-t border-[var(--border)] bg-[var(--card)] p-4"
+              className="sticky bottom-0 z-10 mt-auto border-t border-[var(--border)] bg-[var(--card)] p-4"
               key={section.title}
             >
               {section.controls.map((control) => (
