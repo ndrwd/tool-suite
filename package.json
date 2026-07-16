@@ -1,0 +1,14 @@
+{
+  "name": "tool-suite",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:shape-morph": "npm run dev -w apps/shape-morph",
+    "build:shape-morph": "npm run build -w apps/shape-morph",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
