@@ -21,9 +21,9 @@ export const PRESETS: Preset[] = [
       { shaderId: "highContrast", params: { contrast: 1.4 } },
       {
         shaderId: "progressiveBlur",
-        // Max Blur is a pixel radius here (0..50), not the 0..1 the reference
-        // panel used. Below 0.5 the blur pass is skipped outright, so the
-        // reference's 0.80 read as "off" rather than as a strong blur.
+        // Max Blur is a pixel radius here, not the 0..1 the reference panel
+        // used. Below 0.5 the blur pass is skipped outright, so the reference's
+        // 0.80 read as "off" rather than as a strong blur.
         //
         // The gradient runs along +v_uv.y, which points up, so a bare Vertical
         // axis blurs the sky. Half a turn aims it at the foreground instead.
@@ -32,7 +32,7 @@ export const PRESETS: Preset[] = [
           gradientStart: 0.14,
           gradientEnd: 1.0,
           axis: 1,
-          angle: 3.14,
+          angle: 180,
           softness: 0,
           arc: 0,
           motion: 0.9,
@@ -67,9 +67,10 @@ export const PRESETS: Preset[] = [
 ]
 
 /**
- * The empty stack. Not a member of PRESETS — it is the absence of one, and the
- * state the app opens in. Picking it clears every effect; it is also what the
- * picker falls back to once a preset has been edited into something of its own.
+ * No preset. Not a member of PRESETS — it is the absence of one, and the state
+ * the app opens in. Picking it only detaches the label; it never touches the
+ * stack, which is the Reset action's job. It is also what the picker falls back
+ * to once a preset has been edited into something of its own.
  */
 export const MANUAL_PRESET = "manual"
 
@@ -97,7 +98,7 @@ export function presetLayers(preset: Preset): ShaderLayer[] {
 /**
  * Which preset the current stack corresponds to, or null once it has been
  * edited. Derived rather than remembered, so tweaking any slider drops the
- * label back to Custom on its own and it can never claim a stale preset.
+ * label back to Manual on its own and it can never claim a stale preset.
  */
 export function matchPreset(layers: ShaderLayer[]): Preset | null {
   return (

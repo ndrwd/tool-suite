@@ -152,7 +152,7 @@ void main() {
     description: "Chromatic aberration that splits color channels",
     params: [
       { key: "amount", label: "Amount", min: 0, max: 0.05, step: 0.001, default: 0.012 },
-      { key: "angle", label: "Angle", min: 0, max: 6.28, step: 0.01, default: 0.0 },
+      { key: "angle", label: "Angle", min: 0, max: 360, step: 1, default: 0 },
       { key: "falloff", label: "Edge Falloff", min: 0, max: 1, step: 0.02, default: 0.0 },
       toggle("animate", "Animate"),
       blend(),
@@ -165,7 +165,7 @@ uniform float u_animate;
 uniform float u_mix;
 
 void main() {
-  float a = u_angle + u_animate * u_time * 0.6;
+  float a = radians(u_angle) + u_animate * u_time * 0.6;
   // Optionally scale the shift by distance from center for a lens-like falloff.
   float radial = mix(1.0, length(v_uv - 0.5) * 2.0, u_falloff);
   vec2 dir = vec2(cos(a), sin(a)) * u_amount * radial;
@@ -312,7 +312,7 @@ void main() {
     description: "Print-style halftone dot pattern",
     params: [
       { key: "scale", label: "Dot Scale", min: 40, max: 300, step: 2, default: 120 },
-      { key: "angle", label: "Grid Angle", min: 0, max: 1.57, step: 0.01, default: 0.4 },
+      { key: "angle", label: "Grid Angle", min: 0, max: 90, step: 1, default: 23 },
       { key: "smooth", label: "Softness", min: 0.0, max: 0.5, step: 0.01, default: 0.12 },
       { key: "contrast", label: "Contrast", min: 0.5, max: 2.5, step: 0.02, default: 1.0 },
       toggle("color", "Colored"),
@@ -330,7 +330,7 @@ mat2 rot(float a) { return mat2(cos(a), -sin(a), sin(a), cos(a)); }
 
 float halftone(float value, vec2 coord) {
   value = clamp((value - 0.5) * u_contrast + 0.5, 0.0, 1.0);
-  vec2 g = rot(u_angle) * coord * u_scale;
+  vec2 g = rot(radians(u_angle)) * coord * u_scale;
   vec2 cell = fract(g) - 0.5;
   float d = length(cell);
   float radius = sqrt(1.0 - value) * 0.7;
@@ -708,7 +708,7 @@ void main() {
           { value: 1, label: "Vertical (Y)" },
         ],
       },
-      { key: "angle", label: "Angle", min: 0.0, max: 6.28, step: 0.01, default: 0.0 },
+      { key: "angle", label: "Angle", min: 0.0, max: 360.0, step: 1.0, default: 0.0 },
       { key: "softness", label: "Softness", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
       { key: "arc", label: "Arc", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
       { key: "motion", label: "Motion", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
@@ -758,8 +758,9 @@ void main() {
   p.x *= aspect;
 
   vec2 axisDir = u_axis < 0.5 ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-  float c = cos(u_angle);
-  float s = sin(u_angle);
+  float a = radians(u_angle);
+  float c = cos(a);
+  float s = sin(a);
   axisDir = vec2(axisDir.x * c - axisDir.y * s, axisDir.x * s + axisDir.y * c);
 
   float t = dot(p, axisDir) + 0.5;
