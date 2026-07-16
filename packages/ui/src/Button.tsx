@@ -41,6 +41,7 @@ export function SectionAction({
         "inline-flex shrink-0 items-center gap-1 text-2xs text-[var(--muted-foreground)] outline-none transition-colors",
         "hover:text-[var(--foreground)]",
         "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-[var(--muted-foreground)]",
         className,
       )}
       type={type}

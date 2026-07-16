@@ -6,11 +6,15 @@ import { Button } from "@tools/ui"
 import { ShaderCanvas, type ShaderCanvasHandle } from "@/components/shader-canvas"
 import { ControlsPanel } from "@/components/controls-panel"
 import { MediaPanel } from "@/components/media-panel"
-import { getShader, defaultParams, createLayer, type ShaderLayer } from "@/lib/shaders"
+import { getShader, defaultParams, defaultColors, createLayer, type Rgb, type ShaderLayer } from "@/lib/shaders"
+import { MANUAL_PRESET, getPreset, matchPreset, presetLayers } from "@/lib/presets"
 import { DEFAULT_CANVAS, type CanvasSettings, type MediaSource } from "@/lib/renderer"
 
 export default function Page() {
-  const [layers, setLayers] = useState<ShaderLayer[]>(() => [createLayer("dither")])
+  const [layers, setLayers] = useState<ShaderLayer[]>(() => [])
+  // Set when Manual is picked outright: it detaches the label from a preset the
+  // stack still happens to match, without touching the effects themselves.
+  const [detached, setDetached] = useState(true)
   const [selectedUid, setSelectedUid] = useState<string | null>(() => null)
   const [media, setMedia] = useState<MediaSource | null>(null)
   const [mediaName, setMediaName] = useState<string>("")
@@ -45,13 +49,38 @@ export default function Page() {
     setLayers((prev) => prev.filter((l) => l.uid !== uid))
   }, [])
 
+  // Manual keeps whatever is on the stack — clearing is the Reset action's job,
+  // never a side effect of picking an entry in this menu.
+  const handleApplyPreset = useCallback((presetId: string) => {
+    if (presetId === MANUAL_PRESET) {
+      setDetached(true)
+      return
+    }
+    const preset = getPreset(presetId)
+    if (!preset) return
+    const next = presetLayers(preset)
+    setLayers(next)
+    setSelectedUid(next[next.length - 1]?.uid ?? null)
+    setDetached(false)
+  }, [])
+
+  const handleResetEffects = useCallback(() => {
+    setLayers([])
+    setSelectedUid(null)
+    setDetached(true)
+  }, [])
+
   const handleToggleLayer = useCallback((uid: string) => {
     setLayers((prev) => prev.map((l) => (l.uid === uid ? { ...l, enabled: !l.enabled } : l)))
   }, [])
 
   const handleChangeShader = useCallback((uid: string, shaderId: string) => {
     setLayers((prev) =>
-      prev.map((l) => (l.uid === uid ? { ...l, shaderId, params: defaultParams(getShader(shaderId)) } : l)),
+      prev.map((l) =>
+        l.uid === uid
+          ? { ...l, shaderId, params: defaultParams(getShader(shaderId)), colors: defaultColors(getShader(shaderId)) }
+          : l,
+      ),
     )
   }, [])
 
@@ -59,9 +88,17 @@ export default function Page() {
     setLayers((prev) => prev.map((l) => (l.uid === uid ? { ...l, params: { ...l.params, [key]: value } } : l)))
   }, [])
 
+  const handleColorChange = useCallback((uid: string, key: string, value: Rgb) => {
+    setLayers((prev) => prev.map((l) => (l.uid === uid ? { ...l, colors: { ...l.colors, [key]: value } } : l)))
+  }, [])
+
   const handleResetParams = useCallback((uid: string) => {
     setLayers((prev) =>
-      prev.map((l) => (l.uid === uid ? { ...l, params: defaultParams(getShader(l.shaderId)) } : l)),
+      prev.map((l) =>
+        l.uid === uid
+          ? { ...l, params: defaultParams(getShader(l.shaderId)), colors: defaultColors(getShader(l.shaderId)) }
+          : l,
+      ),
     )
   }, [])
 
@@ -280,7 +317,11 @@ export default function Page() {
               onToggleLayer={handleToggleLayer}
               onChangeShader={handleChangeShader}
               onParamChange={handleParamChange}
+              onColorChange={handleColorChange}
               onResetParams={handleResetParams}
+              onApplyPreset={handleApplyPreset}
+              onResetEffects={handleResetEffects}
+              activePresetId={(detached ? null : matchPreset(layers)?.id) ?? MANUAL_PRESET}
             />
           </div>
           <div className="shrink-0 border-t border-[var(--border)] p-4">

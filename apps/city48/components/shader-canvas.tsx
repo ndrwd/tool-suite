@@ -67,7 +67,7 @@ export const ShaderCanvas = forwardRef<ShaderCanvasHandle, Props>(function Shade
     try {
       const enabled = layers
         .filter((l) => l.enabled)
-        .map((l) => ({ shader: getShader(l.shaderId), params: l.params }))
+        .map((l) => ({ shader: getShader(l.shaderId), params: l.params, colors: l.colors }))
       rendererRef.current.setLayers(enabled)
       onError(null)
     } catch (e) {

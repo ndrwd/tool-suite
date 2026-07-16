@@ -1,4 +1,4 @@
-import { VERTEX_SHADER, type ShaderDef } from "./shaders"
+import { VERTEX_SHADER, type Rgb, type ShaderDef } from "./shaders"
 
 export type MediaSource =
   | { kind: "image"; el: HTMLImageElement; width: number; height: number }
@@ -68,7 +68,11 @@ const PASSTHROUGH_FRAGMENT = `
   void main() { gl_FragColor = texture2D(u_texture, v_uv); }
 `
 
-type CompiledLayer = { program: WebGLProgram; params: Record<string, number> }
+type CompiledLayer = {
+  program: WebGLProgram
+  params: Record<string, number>
+  colors: Record<string, Rgb>
+}
 
 // Multi-pass WebGL renderer: compose media into a framed texture, then run a chain
 // of shader passes over it via ping-pong framebuffers.
@@ -156,8 +160,8 @@ export class ShaderRenderer {
   }
 
   // Build the shader chain from the enabled layers, caching programs by fragment source.
-  setLayers(layers: { shader: ShaderDef; params: Record<string, number> }[]) {
-    this.layers = layers.flatMap(({ shader, params }) => {
+  setLayers(layers: { shader: ShaderDef; params: Record<string, number>; colors: Record<string, Rgb> }[]) {
+    this.layers = layers.flatMap(({ shader, params, colors }) => {
       let program = this.programCache.get(shader.fragment)
       if (!program) {
         program = this.buildProgram(VERTEX_SHADER, shader.fragment)
@@ -166,11 +170,11 @@ export class ShaderRenderer {
       // Progressive blur runs as a true 2-pass separable Gaussian (H then V).
       if (shader.id === "progressiveBlur") {
         return [
-          { program, params: { ...params, pass: 0 } },
-          { program, params: { ...params, pass: 1 } },
+          { program, params: { ...params, pass: 0 }, colors },
+          { program, params: { ...params, pass: 1 }, colors },
         ]
       }
-      return [{ program, params }]
+      return [{ program, params, colors }]
     })
   }
 
@@ -277,6 +281,7 @@ export class ShaderRenderer {
     srcTexture: WebGLTexture,
     targetTex: WebGLTexture | null,
     params: Record<string, number>,
+    colors: Record<string, Rgb>,
   ) {
     const gl = this.gl
     if (targetTex) {
@@ -308,6 +313,11 @@ export class ShaderRenderer {
       if (loc) gl.uniform1f(loc, value)
     }
 
+    for (const [key, [r, g, b]] of Object.entries(colors)) {
+      const loc = gl.getUniformLocation(program, "u_" + key)
+      if (loc) gl.uniform3f(loc, r, g, b)
+    }
+
     gl.drawArrays(gl.TRIANGLES, 0, 6)
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   }
@@ -315,7 +325,7 @@ export class ShaderRenderer {
   private shaderChain() {
     // No enabled effects: blit the composed frame straight to the screen.
     if (this.layers.length === 0) {
-      this.renderPass(this.passthroughProgram, this.composedTexture, null, {})
+      this.renderPass(this.passthroughProgram, this.composedTexture, null, {}, {})
       return
     }
 
@@ -324,7 +334,7 @@ export class ShaderRenderer {
     for (let i = 0; i < this.layers.length; i++) {
       const isLast = i === this.layers.length - 1
       const target = isLast ? null : targets[i % 2]
-      this.renderPass(this.layers[i].program, src, target, this.layers[i].params)
+      this.renderPass(this.layers[i].program, src, target, this.layers[i].params, this.layers[i].colors)
       if (!isLast) src = targets[i % 2]
     }
   }

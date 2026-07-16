@@ -14,12 +14,25 @@ export type ShaderParam = {
   options?: { value: number; label: string }[]
 }
 
+// An RGB colour a shader exposes, kept apart from `params` because those are a
+// flat map of floats bound with uniform1f. A colour needs a vec3, so it gets its
+// own channel rather than being smuggled through as three unrelated sliders.
+export type ShaderColor = {
+  key: string
+  label: string
+  default: Rgb
+}
+
+/** Linear 0..1 RGB, matching the vec3 the fragment shader receives. */
+export type Rgb = [number, number, number]
+
 export type ShaderDef = {
   id: string
   name: string
   description: string
   fragment: string
   params: ShaderParam[]
+  colors?: ShaderColor[]
 }
 
 // Helper to declare a boolean on/off parameter.
@@ -679,7 +692,7 @@ void main() {
     name: "Progressive Blur",
     description: "Directional gradient blur that ramps across the frame",
     params: [
-      { key: "maxBlur", label: "Max Blur", min: 0.0, max: 50.0, step: 0.01, default: 1.3 },
+      { key: "maxBlur", label: "Max Blur", min: 0.0, max: 100.0, step: 0.01, default: 1.3 },
       { key: "gradientStart", label: "Gradient Start", min: 0.0, max: 1.0, step: 0.01, default: 0.32 },
       { key: "gradientEnd", label: "Gradient End", min: 0.0, max: 1.0, step: 0.01, default: 0.75 },
       {
@@ -698,6 +711,8 @@ void main() {
       { key: "angle", label: "Angle", min: 0.0, max: 6.28, step: 0.01, default: 0.0 },
       { key: "softness", label: "Softness", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
       { key: "arc", label: "Arc", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
+      { key: "motion", label: "Motion", min: 0.0, max: 1.0, step: 0.01, default: 0.0 },
+      { key: "motionAngle", label: "Motion Angle", min: 0.0, max: 360.0, step: 1.0, default: 0.0 },
     ],
     fragment: `${HEADER}
 uniform float u_maxBlur;
@@ -707,21 +722,30 @@ uniform float u_axis;
 uniform float u_angle;
 uniform float u_softness;
 uniform float u_arc;
+uniform float u_motion;
+uniform float u_motionAngle;
 
 uniform float u_pass;
 
 vec3 blurPass(vec2 uv, float radiusPx) {
-  if (radiusPx < 0.5) return texture2D(u_texture, uv).rgb;
+  // Two separable passes along a rotatable pair of axes. Motion shrinks the
+  // second, across-axis pass: at 0 the two are equal and the blur is a round
+  // defocus, at 1 only the first survives and it reads as a directional smear.
+  float a = radians(u_motionAngle);
+  vec2 dir = vec2(cos(a), sin(a));
+  vec2 axis = u_pass < 0.5 ? dir : vec2(-dir.y, dir.x);
+  float r = u_pass < 0.5 ? radiusPx : radiusPx * (1.0 - u_motion);
 
-  vec2 stepPx = vec2(radiusPx / 8.0) / u_resolution;
+  if (r < 0.5) return texture2D(u_texture, uv).rgb;
+
+  vec2 stepPx = axis * (r / 8.0) / u_resolution;
   vec3 acc = vec3(0.0);
   float weightSum = 0.0;
 
   for (int i = -8; i <= 8; i++) {
     float fi = float(i);
     float w = exp(-0.5 * fi * fi / 16.0);
-    vec2 offset = u_pass < 0.5 ? vec2(fi) * stepPx : vec2(0.0, fi) * stepPx;
-    acc += texture2D(u_texture, uv + offset).rgb * w;
+    acc += texture2D(u_texture, uv + fi * stepPx).rgb * w;
     weightSum += w;
   }
 
@@ -880,6 +904,71 @@ void main() {
 }
 `,
   },
+  {
+    id: "wavyLines",
+    name: "Wavy Lines",
+    description: "Line halftone whose stripes ripple and thicken with luminance",
+    params: [
+      { key: "frequency", label: "Frequency", min: 1.0, max: 20.0, step: 0.05, default: 6.5 },
+      { key: "thickness", label: "Thickness", min: 0.0, max: 1.0, step: 0.01, default: 0.82 },
+      { key: "waveAmplitude", label: "Wave Amplitude", min: 0.0, max: 100.0, step: 1.0, default: 38.0 },
+      { key: "waveFrequency", label: "Wave Frequency", min: 0.0, max: 5.0, step: 0.01, default: 0.6 },
+      { key: "edgeSmoothing", label: "Edge Smoothing", min: 0.0, max: 1.0, step: 0.01, default: 0.33 },
+      { key: "rotation", label: "Rotation", min: 0.0, max: 360.0, step: 0.5, default: 202.0 },
+      { key: "centerX", label: "Center X", min: 0.0, max: 1.0, step: 0.01, default: 0.5 },
+      { key: "centerY", label: "Center Y", min: 0.0, max: 1.0, step: 0.01, default: 0.5 },
+      blend(),
+    ],
+    colors: [
+      { key: "baseColor", label: "Base Color", default: [0.243, 0.231, 0.431] },
+      { key: "lineColor", label: "Line Color", default: [0.725, 0.769, 0.678] },
+    ],
+    fragment: `${HEADER}
+uniform float u_frequency;
+uniform float u_thickness;
+uniform float u_waveAmplitude;
+uniform float u_waveFrequency;
+uniform float u_edgeSmoothing;
+uniform float u_rotation;
+uniform float u_centerX;
+uniform float u_centerY;
+uniform vec3 u_baseColor;
+uniform vec3 u_lineColor;
+uniform float u_mix;
+
+void main() {
+  vec3 color = texture2D(u_texture, v_uv).rgb;
+
+  // Work in pixels around the chosen centre, so rotation stays circular and the
+  // wave amplitude reads in pixels the way its slider is labelled.
+  vec2 p = (v_uv - vec2(u_centerX, u_centerY)) * u_resolution;
+
+  float a = radians(u_rotation);
+  vec2 dir = vec2(cos(a), sin(a));
+  vec2 rotated = vec2(dot(p, dir), dot(p, vec2(-dir.y, dir.x)));
+
+  // Ripple the stripe coordinate along the band, then fold it into a triangle
+  // wave so every stripe has a symmetric profile to threshold against.
+  float ripple = sin(rotated.x * u_waveFrequency * 0.01) * u_waveAmplitude;
+  float band = (rotated.y + ripple) * u_frequency * 0.01;
+  float tri = abs(fract(band) - 0.5) * 2.0;
+
+  // Brighter pixels grow the stripe, so the image reads as ink coverage on a
+  // plate: highlights fill with line colour, shadows keep the base showing
+  // through. Two flat tones only — the photo drives coverage, not hue.
+  float lum = dot(color, vec3(0.299, 0.587, 0.114));
+  float width = clamp(lum * u_thickness, 0.0, 1.0);
+
+  // Quarter-scale the slider: at full width the ramp spans most of a stripe and
+  // smears faint lines across areas that should stay clear.
+  float edge = max(u_edgeSmoothing * 0.25, 0.002);
+  float line = smoothstep(width + edge, width - edge, tri);
+
+  vec3 result = mix(u_baseColor, u_lineColor, line);
+  gl_FragColor = vec4(mix(color, result, u_mix), 1.0);
+}
+`,
+  }
 ]
 
 export function getShader(id: string): ShaderDef {
@@ -892,11 +981,18 @@ export function defaultParams(shader: ShaderDef): Record<string, number> {
   return out
 }
 
+export function defaultColors(shader: ShaderDef): Record<string, Rgb> {
+  const out: Record<string, Rgb> = {}
+  for (const c of shader.colors ?? []) out[c.key] = [...c.default]
+  return out
+}
+
 // A single effect in the shader stack. Enabled layers are applied in order.
 export type ShaderLayer = {
   uid: string
   shaderId: string
   params: Record<string, number>
+  colors: Record<string, Rgb>
   enabled: boolean
 }
 
@@ -906,6 +1002,7 @@ export function createLayer(shaderId: string): ShaderLayer {
     uid: Math.random().toString(36).slice(2, 10),
     shaderId: shader.id,
     params: defaultParams(shader),
+    colors: defaultColors(shader),
     enabled: true,
   }
 }

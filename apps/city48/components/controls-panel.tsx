@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { Check, ChevronLeft, ChevronRight, Plus, X, RotateCcw } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, X, RotateCcw } from "lucide-react"
 import {
-  Chevron,
   CollapsibleSection,
+  ColorField,
   FieldLabel,
   SectionAction,
   Select,
@@ -12,7 +11,10 @@ import {
   Toggle,
   fieldLabelClass,
 } from "@tools/ui"
-import { SHADERS, getShader, type ShaderLayer } from "@/lib/shaders"
+import { SHADERS, getShader, type Rgb, type ShaderLayer } from "@/lib/shaders"
+import { hexToRgb, rgbToHex } from "@/lib/utils"
+import { MANUAL_PRESET, PRESETS, presetModules } from "@/lib/presets"
+import { OptionPicker } from "@/components/option-picker"
 
 type Props = {
   layers: ShaderLayer[]
@@ -23,7 +25,11 @@ type Props = {
   onToggleLayer: (uid: string) => void
   onChangeShader: (uid: string, shaderId: string) => void
   onParamChange: (uid: string, key: string, value: number) => void
+  onColorChange: (uid: string, key: string, value: Rgb) => void
   onResetParams: (uid: string) => void
+  onApplyPreset: (presetId: string) => void
+  onResetEffects: () => void
+  activePresetId: string
 }
 
 type LayerSectionProps = {
@@ -32,6 +38,7 @@ type LayerSectionProps = {
   onToggle: () => void
   onChangeShader: (shaderId: string) => void
   onParamChange: (key: string, value: number) => void
+  onColorChange: (key: string, value: Rgb) => void
   onResetParams: () => void
 }
 
@@ -41,20 +48,10 @@ function LayerSection({
   onToggle,
   onChangeShader,
   onParamChange,
+  onColorChange,
   onResetParams,
 }: LayerSectionProps) {
-  const [open, setOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const shader = getShader(layer.shaderId)
-
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
 
   function cycleShader(dir: 1 | -1) {
     const index = SHADERS.findIndex((s) => s.id === shader.id)
@@ -78,7 +75,7 @@ function LayerSection({
         </span>
       }
     >
-      <div ref={dropdownRef} className="relative flex items-stretch gap-2">
+      <div className="flex items-stretch gap-2">
         <button
           type="button"
           aria-label="Previous shader"
@@ -88,19 +85,13 @@ function LayerSection({
           <ChevronLeft className="size-3" />
         </button>
 
-        <button
-          type="button"
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md bg-[var(--secondary)] px-3 py-2 text-left transition hover:brightness-110"
-        >
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate text-xs font-medium text-[var(--foreground)]">{shader.name}</span>
-            <span className="truncate text-2xs text-[var(--muted-foreground)]">{shader.description}</span>
-          </span>
-          <Chevron collapsed={false} />
-        </button>
+        <OptionPicker
+          aria-label="Shader"
+          className="min-w-0 flex-1"
+          value={shader.id}
+          options={SHADERS.map((s) => ({ value: s.id, title: s.name, description: s.description }))}
+          onChange={onChangeShader}
+        />
 
         <button
           type="button"
@@ -110,40 +101,6 @@ function LayerSection({
         >
           <ChevronRight className="size-3" />
         </button>
-
-        {open && (
-          <div
-            role="listbox"
-            className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-[var(--border)] bg-[var(--popover)] p-1 shadow-lg"
-          >
-            {SHADERS.map((s) => {
-              const active = s.id === shader.id
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => {
-                    onChangeShader(s.id)
-                    setOpen(false)
-                  }}
-                  className={`flex w-full items-start gap-2 rounded-sm px-2.5 py-2 text-left transition-colors ${
-                    active
-                      ? "bg-[var(--secondary)] text-[var(--foreground)]"
-                      : "text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  <Check className={`mt-0.5 size-3 shrink-0 ${active ? "opacity-100" : "opacity-0"}`} />
-                  <span className="flex flex-col">
-                    <span className="text-xs font-medium">{s.name}</span>
-                    <span className="text-2xs text-[var(--muted-foreground)]">{s.description}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        )}
       </div>
 
       <div className="flex items-center justify-between">
@@ -193,6 +150,18 @@ function LayerSection({
             />
           )
         })}
+
+        {shader.colors?.map((c) => (
+          <ColorField
+            key={c.key}
+            label={c.label}
+            value={rgbToHex(layer.colors[c.key] ?? c.default)}
+            onChange={(next) => {
+              const rgb = hexToRgb(next)
+              if (rgb) onColorChange(c.key, rgb)
+            }}
+          />
+        ))}
       </div>
     </CollapsibleSection>
   )
@@ -205,17 +174,45 @@ export function ControlsPanel({
   onToggleLayer,
   onChangeShader,
   onParamChange,
+  onColorChange,
   onResetParams,
+  onApplyPreset,
+  onResetEffects,
+  activePresetId,
 }: Props) {
   return (
     <div className="flex flex-col">
+      {/* Preset — a whole stack in one pick, above the effects it produces */}
+      <section className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-4">
+        <FieldLabel>Preset</FieldLabel>
+        <OptionPicker
+          aria-label="Preset"
+          value={activePresetId}
+          options={[
+            { value: MANUAL_PRESET, title: "Manual", description: "No preset — your own stack of effects" },
+            ...PRESETS.map((preset) => ({
+              value: preset.id,
+              title: preset.name,
+              description: presetModules(preset),
+            })),
+          ]}
+          onChange={onApplyPreset}
+        />
+      </section>
+
       {/* Section header — full-bleed, matches other panel sections */}
       <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <h2 className={fieldLabelClass}>Effects</h2>
-        <SectionAction onClick={onAddLayer}>
-          <Plus className="size-3" />
-          Add
-        </SectionAction>
+        <span className="flex items-center gap-3">
+          <SectionAction onClick={onResetEffects} disabled={layers.length === 0}>
+            <RotateCcw className="size-3" />
+            Reset
+          </SectionAction>
+          <SectionAction onClick={onAddLayer}>
+            <Plus className="size-3" />
+            Add
+          </SectionAction>
+        </span>
       </div>
 
       {layers.length === 0 ? (
@@ -231,6 +228,7 @@ export function ControlsPanel({
             onToggle={() => onToggleLayer(layer.uid)}
             onChangeShader={(shaderId) => onChangeShader(layer.uid, shaderId)}
             onParamChange={(key, value) => onParamChange(layer.uid, key, value)}
+            onColorChange={(key, value) => onColorChange(layer.uid, key, value)}
             onResetParams={() => onResetParams(layer.uid)}
           />
         ))
