@@ -83,10 +83,16 @@ export function buildMesh(
 let grainTile: HTMLCanvasElement | null = null;
 
 /**
- * Monochrome noise tile, built once and reused as a repeating pattern. Grain is
- * generated at fixed 128px and tiled because per-pixel noise over an 8K frame
- * costs far more than it adds visually.
+ * Monochrome noise tile, built once and reused as a repeating pattern.
+ *
+ * 2048 is deliberate: the grain is static, so the tile is generated once and
+ * cached, and the only real cost is the one-off ~17MB. It covers a 1080p/1440p
+ * canvas outright — no repeat, no visible grid. A small tile (128) is cheaper
+ * still but lays a plainly visible lattice across the frame once Grain is
+ * turned up, which is exactly what it must not do.
  */
+const GRAIN_TILE_SIZE = 2048;
+
 function getGrainTile(): HTMLCanvasElement | null {
   if (grainTile) {
     return grainTile;
@@ -96,7 +102,7 @@ function getGrainTile(): HTMLCanvasElement | null {
     return null;
   }
 
-  const size = 128;
+  const size = GRAIN_TILE_SIZE;
   const tile = document.createElement("canvas");
   tile.width = size;
   tile.height = size;
