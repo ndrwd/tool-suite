@@ -7,11 +7,10 @@
  * @tools/tokens to restyle every tool at once. */
 @import '@tools/tokens/styles.css';
 
-/* @tools/ui primitives live outside this app's root (workspace package), which
- * Turbopack's Tailwind won't scan. Safelist the utility classes they use so the
- * shared Slider/Select/Toggle/FieldLabel render correctly here. Keep in sync
- * with packages/ui/src if a primitive's classes change. */
-@source inline("appearance-none pr-7 relative absolute pointer-events-none right-2 top-1/2 -translate-y-1/2 text-2xs tabular-nums cursor-pointer outline-none transition transition-colors transition-transform hover:brightness-110 inline-flex items-center justify-center justify-between shrink-0 h-3 w-3 h-4 w-4 h-5 w-9 rotate-0 -rotate-90 rounded-full rounded-md px-0.5 px-3 py-2 font-medium shadow-sm flex flex-col gap-1.5 w-full translate-x-0 translate-x-4 text-[var(--foreground)] text-[var(--muted-foreground)] border-[var(--border)] hover:border-[var(--muted-foreground)] bg-[var(--background)] bg-[var(--foreground)] border-transparent focus-visible:ring-1 bg-[var(--secondary)] bg-[var(--muted)] hover:bg-[var(--muted)] bg-[color-mix(in_oklab,var(--foreground)_24%,transparent)] focus:border-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[var(--border)] disabled:hover:bg-[var(--secondary)]");
+/* @tools/ui primitives live outside this app's root (workspace package), so
+ * point Tailwind at their source — same as apps/shape-morph. Scanning the real
+ * files means a primitive can change its classes without this app knowing. */
+@source "../../../packages/ui/src";
 
 /* Map the shared palette vars onto Tailwind theme colors so shadcn utilities
  * (bg-card, text-muted-foreground, border-border, …) resolve. The radius scale
