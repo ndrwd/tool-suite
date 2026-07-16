@@ -6,7 +6,6 @@ import {
   ColorField,
   FieldLabel,
   SectionAction,
-  Select,
   Slider,
   Toggle,
   fieldLabelClass,
@@ -127,13 +126,15 @@ function LayerSection({
 
           if (p.type === "select" && p.options?.length) {
             return (
-              <Select
-                key={p.key}
-                label={p.label}
-                value={String(value)}
-                options={p.options.map((option) => ({ value: String(option.value), label: option.label }))}
-                onChange={(next) => onParamChange(p.key, Number.parseFloat(next))}
-              />
+              <div className="flex flex-col gap-1.5" key={p.key}>
+                <FieldLabel>{p.label}</FieldLabel>
+                <OptionPicker
+                  aria-label={p.label}
+                  value={String(value)}
+                  options={p.options.map((option) => ({ value: String(option.value), title: option.label }))}
+                  onChange={(next) => onParamChange(p.key, Number.parseFloat(next))}
+                />
+              </div>
             )
           }
 
