@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "@tools/tokens/styles.css";
+
+/* Scan this app's own source. */
+@source ".";
+/* Scan the shared packages so utility classes used inside @tools/ui primitives
+ * and the @tools/runtime shell (panel, timeline, controls) are generated. */
+@source "../../../packages/ui/src";
+@source "../../../packages/runtime/src";

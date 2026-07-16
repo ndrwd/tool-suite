@@ -9,6 +9,8 @@
   "scripts": {
     "dev:shape-morph": "npm run dev -w apps/shape-morph",
     "build:shape-morph": "npm run build -w apps/shape-morph",
+    "dev:mesh-gradient": "npm run dev -w apps/mesh-gradient",
+    "build:mesh-gradient": "npm run build -w apps/mesh-gradient",
     "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }
