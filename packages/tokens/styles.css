@@ -2,11 +2,16 @@
  * @tools/tokens — shared design tokens for the tool suite.
  *
  * Imported by every app AFTER `@import "tailwindcss"`. Contains the Tailwind
- * `@theme` extensions, theme variables (dark default + light override), custom
+ * `@theme` extensions, theme variables (shadcn light/dark model), custom
  * variants, and the base element layer. Edit here to restyle every tool at once.
  *
  * Do NOT put `@import "tailwindcss"` or `@source` here — those must live in each
  * app's own entry CSS so Tailwind runs in the app build context.
+ *
+ * Palette comes from the shadcn preset `b1VmRIRc` (style base-luma, baseColor
+ * neutral, theme amber, radius small). The suite used to be strictly monochrome;
+ * amber now carries active/selected state via `--primary`. Keep new UI on the
+ * tokens below rather than ad-hoc colors.
  */
 
 @import "@fontsource-variable/inter";
@@ -20,64 +25,143 @@
   --font-sans: "Inter Variable", sans-serif;
   --font-mono:
     ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
 }
 
+/*
+ * Maps the raw theme variables onto Tailwind color/radius utilities, so both
+ * `bg-background` and the existing `bg-[var(--background)]` spelling resolve to
+ * the same value. Required by shadcn components.
+ */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* `--radius-xs` is not part of the preset scale but is used across the
+   * panels, so it keeps a slot on the same multiplicative curve. */
+  --radius-xs: calc(var(--radius) * 0.4);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Matches the `.dark` element itself as well as its descendants — the apps set
+ * the class on <html>, so the narrower `(&:is(.dark *))` would skip it. */
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant focus-visible (&:is([data-focus-visible-mode="keyboard"] *):focus-visible);
 
 :root {
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.977 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.555 0.163 48.998);
+  --primary-foreground: oklch(0.987 0.022 95.277);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.45rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.666 0.179 58.318);
+  --sidebar-primary-foreground: oklch(0.987 0.022 95.277);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  /* Suite-specific accents, carried over from the monochrome palette. */
+  --link: oklch(0.45 0 0);
+  --inspect: oklch(0.55 0 0);
+  --attention: oklch(0.72 0 0);
+  --attention-foreground: oklch(0.145 0 0);
+  color-scheme: light;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --link: oklch(0.75 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --primary: oklch(0.473 0.137 46.201);
+  --primary-foreground: oklch(0.987 0.022 95.277);
+  --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.208 0 0);
+  --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.769 0.188 70.08);
+  --sidebar-primary-foreground: oklch(0.279 0.077 45.635);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  --link: oklch(0.75 0 0);
   --inspect: oklch(0.55 0 0);
   --attention: oklch(0.72 0 0);
   --attention-foreground: oklch(0.145 0 0);
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: var(--foreground);
-  --border: oklch(0.311 0 0);
-  --input: oklch(0.311 0 0);
-  --ring: oklch(0.556 0 0);
-  --radius: 0.375rem;
-  --button-radius-xs: 0.125rem;
-  --button-radius-sm: 0.25rem;
-  --button-radius-md: 0.375rem;
-  --button-radius-lg: 0.5rem;
   color-scheme: dark;
-}
-
-html.light {
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.205 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.955 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.955 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --accent: oklch(0.955 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  color-scheme: light;
 }
 
 @layer base {
@@ -159,8 +243,10 @@ button {
 
 /*
  * Shared range slider — used by the @tools/ui Slider (class `ui-slider`) so
- * every tool renders an identical, monochrome control regardless of the OS
- * native styling. Edit here to restyle all sliders at once.
+ * every tool renders an identical control regardless of the OS native styling.
+ * The thumb carries the `--primary` accent; the track stays neutral so a panel
+ * full of sliders reads as one quiet block with the handles picked out.
+ * Edit here to restyle all sliders at once.
  */
 .ui-slider {
   -webkit-appearance: none;
@@ -181,7 +267,7 @@ button {
   width: 0.875rem;
   height: 0.875rem;
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   border: 2px solid var(--background);
   cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.1s ease;
@@ -191,15 +277,15 @@ button {
   height: 0.875rem;
   border: 2px solid var(--background);
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
 .ui-slider:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 0 5px color-mix(in oklab, var(--foreground) 14%, transparent);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 24%, transparent);
 }
 .ui-slider:hover::-moz-range-thumb {
-  box-shadow: 0 0 0 5px color-mix(in oklab, var(--foreground) 14%, transparent);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 24%, transparent);
 }
 .ui-slider:active::-webkit-slider-thumb {
   transform: scale(1.1);
