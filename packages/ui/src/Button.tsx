@@ -1,26 +1,26 @@
 import * as React from "react";
 
 import { cn } from "./cn";
+import { Button as ShadcnButton } from "./ui/button";
 
 /**
- * Shared button — monochrome, gray fill. One button style across every tool.
- * Full-width by default (stacked panel actions); pass `className` to override.
+ * Shared button — the shadcn button on the `secondary` variant, full-width by
+ * default (stacked panel actions). Pass `className` to override, or `variant`
+ * to reach for the accent (`default`) or destructive treatments.
  */
 export function Button({
   className,
+  variant = "secondary",
+  size = "sm",
   type = "button",
   ...props
-}: React.ComponentPropsWithoutRef<"button">): React.JSX.Element {
+}: React.ComponentPropsWithoutRef<typeof ShadcnButton>): React.JSX.Element {
   return (
-    <button
-      className={cn(
-        "inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--secondary)] px-3 py-2 text-xs font-medium text-[var(--foreground)] outline-none transition-colors",
-        "hover:border-[var(--muted-foreground)] hover:bg-[var(--muted)]",
-        "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
-        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--border)] disabled:hover:bg-[var(--secondary)]",
-        className,
-      )}
+    <ShadcnButton
+      className={cn("w-full", className)}
+      size={size}
       type={type}
+      variant={variant}
       {...props}
     />
   );
@@ -28,7 +28,9 @@ export function Button({
 
 /**
  * Borderless action for a section header (Reset, Restore, Add) — muted until
- * hovered, so it never competes with the section title next to it.
+ * hovered, so it never competes with the section title next to it. Kept
+ * bespoke: the shadcn `ghost` variant carries a button-sized hit area and
+ * padding that would crowd a section header at this scale.
  */
 export function SectionAction({
   className,

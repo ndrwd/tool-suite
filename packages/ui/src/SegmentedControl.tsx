@@ -9,9 +9,9 @@ export type SegmentedOption<T extends string | number> = {
 };
 
 /**
- * Monochrome segmented control — every option sits on a recessed track and the
- * selected one lifts out of it. Three surfaces, so the group reads as a group:
- * panel (--card) < track (--secondary) < selected (foreground mix).
+ * Segmented control — every option sits on a recessed track and the selected
+ * one lifts out of it on the `--primary` accent. Three surfaces, so the group
+ * reads as a group: panel (--card) < track (--secondary) < selected (primary).
  */
 export function SegmentedControl<T extends string | number>({
   value,
@@ -37,7 +37,7 @@ export function SegmentedControl<T extends string | number>({
               "flex flex-1 items-center justify-center gap-1.5 rounded-sm px-3 py-1.5 text-2xs font-semibold outline-none transition-colors",
               "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
               active
-                ? "bg-[color-mix(in_oklab,var(--foreground)_22%,transparent)] text-[var(--foreground)] shadow-sm"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm"
                 : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
             )}
             key={option.value}

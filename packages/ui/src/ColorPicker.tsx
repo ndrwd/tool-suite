@@ -222,7 +222,7 @@ export function ColorPicker({
           <div className="mt-3 flex items-center gap-2">
             <span className="rounded border border-[var(--border)] px-1.5 py-1 text-2xs text-[var(--muted-foreground)]">Hex</span>
             <input
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--muted)] px-2 py-1 font-mono text-xs uppercase text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+              className="w-full rounded-md border border-[var(--border)] bg-[var(--muted)] px-2 py-1 font-mono text-xs uppercase text-[var(--foreground)] outline-none focus:border-[var(--primary)]"
               onChange={(event) => onChange(event.target.value.startsWith("#") ? event.target.value : `#${event.target.value}`)}
               value={value.replace("#", "")}
             />

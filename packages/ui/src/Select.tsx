@@ -1,12 +1,24 @@
 import * as React from "react";
 
-import { cn } from "./cn";
-import { FieldLabel, fieldInputClass } from "./Field";
-import { Chevron } from "./Panel";
+import { FieldLabel } from "./Field";
+import {
+  Select as ShadcnSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export type SelectOption = { value: string; label: string };
 
-/** Labeled native select with the shared disclosure chevron. Pass `label={false}` to omit the caption. */
+/**
+ * Labeled select on the shadcn/Base UI listbox. Pass `label={false}` to omit the
+ * caption. The `value + options + onChange` API is the suite's — the
+ * schema-driven panels in @tools/runtime pass plain option arrays.
+ *
+ * A `<label>` wrapper would steal the click from the trigger button, so the
+ * caption sits beside it rather than wrapping it.
+ */
 export function Select({
   label,
   value,
@@ -19,24 +31,24 @@ export function Select({
   onChange: (next: string) => void;
 }): React.JSX.Element {
   return (
-    <label className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       {label !== false ? <FieldLabel>{label}</FieldLabel> : null}
-      <div className="relative">
-        <select
-          className={cn(fieldInputClass, "appearance-none pr-7")}
-          onChange={(event) => onChange(event.target.value)}
-          value={value}
-        >
+      <ShadcnSelect
+        items={options}
+        onValueChange={(next) => onChange(String(next))}
+        value={value}
+      >
+        <SelectTrigger className="h-8 w-full text-xs" size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={option.value}>
               {option.label}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-          <Chevron collapsed={false} />
-        </span>
-      </div>
-    </label>
+        </SelectContent>
+      </ShadcnSelect>
+    </div>
   );
 }
