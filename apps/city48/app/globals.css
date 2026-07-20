@@ -2,9 +2,10 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Shared design system — palette, typography (Inter), radius base, and the
- * dark/light theme variables. Imported last so it drives the look; edit
- * @tools/tokens to restyle every tool at once. */
+/* Shared design system — palette, typography (Inter), radius scale, the
+ * light/dark theme variables, and the `@theme inline` colour mappings that make
+ * shadcn utilities (bg-card, text-muted-foreground, …) resolve. Imported last so
+ * it drives the look; edit @tools/tokens to restyle every tool at once. */
 @import '@tools/tokens/styles.css';
 
 /* @tools/ui primitives live outside this app's root (workspace package), so
@@ -12,58 +13,16 @@
  * files means a primitive can change its classes without this app knowing. */
 @source "../../../packages/ui/src";
 
-/* Map the shared palette vars onto Tailwind theme colors so shadcn utilities
- * (bg-card, text-muted-foreground, border-border, …) resolve. The radius scale
- * derives from the shared --radius. */
-@theme inline {
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-/* Range slider thumb styling for the dark minimalist UI */
+/* Local range sliders (the canvas zoom and the shader parameter rows that are
+ * still native inputs). The thumb carries `--primary` so they read the same as
+ * the shared @tools/ui slider. */
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   cursor: pointer;
   border: 2px solid var(--background);
 }
@@ -71,7 +30,7 @@
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   cursor: pointer;
   border: 2px solid var(--background);
 }
@@ -83,7 +42,7 @@
   width: 12px;
   height: 12px;
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   cursor: pointer;
   border: 2px solid var(--background);
 }
@@ -91,10 +50,10 @@
   width: 12px;
   height: 12px;
   border-radius: 9999px;
-  background: var(--foreground);
+  background: var(--primary);
   cursor: pointer;
   border: 2px solid var(--background);
 }
 .slider-vertical {
-  accent-color: var(--foreground);
+  accent-color: var(--primary);
 }
